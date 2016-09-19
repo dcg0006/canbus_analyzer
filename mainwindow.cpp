@@ -30,15 +30,15 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     QSqlQuery query;
-    query.exec("DROP TABLE leftTable");  //clean up database before closing
-    query.exec("DROP TABLE rightTable");
+    //query.exec("DROP TABLE leftTable");  //clean up database before closing
+    //query.exec("DROP TABLE rightTable");
     delete ui;
 }
 
-void MainWindow::createTempTable(int currentView){  //makes a table to show in the view
+void MainWindow::createTempTable(int currentView){  //makes a temp table to show in the view
     QSqlQuery query;
     if (currentView == 1){
-        query.exec("CREATE TABLE leftTable(number TEXT, time TEXT, size TEXT, info TEXT)");
+        query.exec("CREATE TEMP TABLE leftTable(number TEXT, time TEXT, size TEXT, info TEXT)");
         tableModel1->clear();
         tableModel1 = new QSqlTableModel();
         tableModel1->setTable("leftTable");
@@ -46,7 +46,7 @@ void MainWindow::createTempTable(int currentView){  //makes a table to show in t
         ui->tableView1->show();
     }
     else if (currentView == 2){
-        query.exec("CREATE TABLE rightTable(number TEXT, time TEXT, size TEXT, info TEXT)");
+        query.exec("CREATE TEMP TABLE rightTable(number TEXT, time TEXT, size TEXT, info TEXT)");
         tableModel2->clear();
         tableModel2 = new QSqlTableModel();
         tableModel2->setTable("rightTable");
