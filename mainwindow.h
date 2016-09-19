@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include <QFile>
 #include <QDebug>
+#include <QSqlTableModel>
+#include <QTableView>
+#include <QSqlQuery>
 
 namespace Ui {
 class MainWindow;
@@ -24,9 +27,15 @@ private:
     Ui::MainWindow *ui;
     void createMenus();
     void createActions();
+    void createTempTable(int currentView);
     QAction *openF1;
     QAction *openF2;
     QMenu *file;
+    QTableView *view1;
+    QTableView *view2;
+    QSqlTableModel *tableModel1;
+    QSqlTableModel *tableModel2;
+    int currentView;
 
 private slots:
     void fOpen1();
