@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>592</width>
-    <height>330</height>
+    <width>665</width>
+    <height>360</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
@@ -29,6 +29,13 @@
         <item>
          <widget class="QLineEdit" name="leftFileName"/>
         </item>
+        <item>
+         <widget class="QPushButton" name="openButton1">
+          <property name="text">
+           <string>Open File</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -37,36 +44,30 @@
          <widget class="QLineEdit" name="lineEdit"/>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="filterButton1">
           <property name="text">
            <string>Filter Out</string>
           </property>
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QPushButton" name="showButton1">
+          <property name="text">
+           <string>Show Only</string>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         </widget>
         </item>
        </layout>
       </item>
       <item>
-       <widget class="QTextBrowser" name="textBrowser"/>
+       <widget class="QTableView" name="tableView1"/>
       </item>
      </layout>
     </item>
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
@@ -77,37 +78,38 @@
         <item>
          <widget class="QLineEdit" name="rightFileName"/>
         </item>
+        <item>
+         <widget class="QPushButton" name="openButton2">
+          <property name="text">
+           <string>Open File</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <widget class="QLineEdit" name="lineEdit_2"/>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="filterButton2">
           <property name="text">
            <string>Filter Out</string>
           </property>
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QPushButton" name="showButton2">
+          <property name="text">
+           <string>Show Only</string>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         </widget>
         </item>
        </layout>
       </item>
       <item>
-       <widget class="QTextBrowser" name="textBrowser_2"/>
+       <widget class="QTableView" name="tableView2"/>
       </item>
      </layout>
     </item>
@@ -118,7 +120,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>592</width>
+     <width>665</width>
      <height>19</height>
     </rect>
    </property>
