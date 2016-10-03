@@ -41,7 +41,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QLineEdit" name="IDLeftEdit"/>
         </item>
         <item>
          <widget class="QPushButton" name="filterButton1">
@@ -90,7 +90,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <widget class="QLineEdit" name="lineEdit_2"/>
+         <widget class="QLineEdit" name="IDRightEdit"/>
         </item>
         <item>
          <widget class="QPushButton" name="filterButton2">

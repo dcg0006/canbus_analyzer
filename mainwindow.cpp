@@ -10,11 +10,11 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     createMenus();
 
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");  //connect to database
+    QSqlDatabase db = db.addDatabase("QSQLITE");  //connect to database
     db.setDatabaseName("masterPIDList.db");
 
     if (!db.open()){
-        //qDebug() << db.lastError();
+        qDebug() << db.lastError();
         qDebug() <<"Error: Unable to connect";
     }
 
@@ -23,22 +23,19 @@ MainWindow::MainWindow(QWidget *parent) :
     tableModel2->setTable("PIDList");
     tableModel2->select();
     ui->tableView2->setModel(tableModel2);
+    ui->tableView2->resizeColumnsToContents();
     ui->tableView2->show();
-
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow(){
     QSqlQuery query;
-    //query.exec("DROP TABLE leftTable");  //clean up database before closing
-    //query.exec("DROP TABLE rightTable");
     delete ui;
 }
 
 void MainWindow::createTempTable(int currentView){  //makes a temp table to show in the view
     QSqlQuery query;
     if (currentView == 1){
-        query.exec("CREATE TEMP TABLE leftTable(number TEXT, time TEXT, size TEXT, info TEXT)");
+        query.exec("CREATE TEMP TABLE leftTable(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
         tableModel1->clear();
         tableModel1 = new QSqlTableModel();
         tableModel1->setTable("leftTable");
@@ -46,7 +43,7 @@ void MainWindow::createTempTable(int currentView){  //makes a temp table to show
         ui->tableView1->show();
     }
     else if (currentView == 2){
-        query.exec("CREATE TEMP TABLE rightTable(number TEXT, time TEXT, size TEXT, info TEXT)");
+        query.exec("CREATE TEMP TABLE rightTable(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
         tableModel2->clear();
         tableModel2 = new QSqlTableModel();
         tableModel2->setTable("rightTable");
@@ -55,25 +52,38 @@ void MainWindow::createTempTable(int currentView){  //makes a temp table to show
     }
 }
 
-void MainWindow::setName(const QString &name)
-{
-    ui->lineEdit->setText(name);
-    ui->lineEdit_2->setText(name);
+void MainWindow::setName(const QString &name){
+    ui->IDLeftEdit->setText(name);
+    ui->IDRightEdit->setText(name);
 }
 
 
-void MainWindow::createActions() //creates actions to be attached to menus
-{
+void MainWindow::createActions(){ //creates actions to be attached to menus
     openF1 = new QAction(tr("Open Left File"), this);
     openF2 = new QAction(tr("Open Right File"), this);
     connect(openF1, SIGNAL(triggered()), this, SLOT(fOpen1()));
-    connect(ui->openButton1, SIGNAL(clicked(bool)), this, SLOT(fOpen1()));
+    connect(ui->openButton1, SIGNAL(clicked(bool)), this, SLOT(fOpen1() ));
     connect(openF2, SIGNAL(triggered()), this, SLOT(fOpen2()));
     connect(ui->openButton2, SIGNAL(clicked(bool)), this, SLOT(fOpen2()));
+    connect(ui->showButton1, SIGNAL(clicked(bool)), this, SLOT(showOnlyIDLeft()));
+    connect(ui->showButton2, SIGNAL(clicked(bool)), this, SLOT(showOnlyIDRight()));
 }
 
-void MainWindow::createMenus() //adds menu items for holding actions
-{
+void MainWindow::showOnlyIDRight(){
+    QString tempID = ui->IDRightEdit->text();
+    tempID = "'%"+tempID+"'";
+    tableModel2->setFilter(QString("ID LIKE %1").arg(tempID));
+    qDebug() << tableModel2->filter();
+}
+
+void MainWindow::showOnlyIDLeft(){
+    QString tempID = ui->IDLeftEdit->text();
+    tempID = "'%"+tempID+"'";
+    tableModel1->setFilter(QString("ID LIKE %1").arg(tempID));
+    qDebug() << tableModel1->filter();
+}
+
+void MainWindow::createMenus(){ //adds menu items for holding actions
     file = menuBar()->addMenu(tr("File"));
     file->addAction(openF1);
     file->addAction(openF2);
@@ -93,23 +103,24 @@ void MainWindow::fOpen1(){  //opens a file to display in left window
     QString temp1;
     QString temp5;
     QString temp6;
+    QByteArray line = file1.readLine(); //skip first line
     while (!file1.atEnd()){
-        QByteArray line = file1.readLine();
-        temp0 = line.split(',').at(0);
-        temp1 = line.split(',').at(1);
-        temp5 = line.split(',').at(5);
-        temp6 = line.split(',').at(6);
-        query.prepare("INSERT INTO leftTable (number, time, size, info) "
-                      "VALUES (:number, :time, :size, :info)");
-        query.bindValue(":number", temp0);
+        line = file1.readLine();
+        temp0 = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+        temp1 = line.split(',').at(1).split('"').at(1);
+        temp5 = line.split(',').at(5).split('"').at(1);
+        temp6 = line.split(',').at(6).split('"').at(1);
+        query.prepare("INSERT INTO leftTable (ID, time, size, info) "
+                      "VALUES (:id, :time, :size, :info)");
+        query.bindValue(":id", temp0);
         query.bindValue(":time", temp1);
         query.bindValue(":size", temp5);
         query.bindValue(":info", temp6);
         query.exec();
     }
     tableModel1->select();
+    ui->tableView1->resizeColumnsToContents();
     file1.close();
-
 }
 
 void MainWindow::fOpen2(){  //opens a file to display in the right window
@@ -127,22 +138,22 @@ void MainWindow::fOpen2(){  //opens a file to display in the right window
     QString temp1;
     QString temp5;
     QString temp6;
+    QByteArray line = file2.readLine(); //skip first line
     while (!file2.atEnd()){
-        QByteArray line = file2.readLine();
-        temp0 = line.split(',').at(0);
-        temp1 = line.split(',').at(1);
-        temp5 = line.split(',').at(5);
-        temp6 = line.split(',').at(6);
-        query.prepare("INSERT INTO rightTable (number, time, size, info) "
-                      "VALUES (:number, :time, :size, :info)");
-        query.bindValue(":number", temp0);
+        line = file2.readLine();
+        temp0 = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+        temp1 = line.split(',').at(1).split('"').at(1);
+        temp5 = line.split(',').at(5).split('"').at(1);
+        temp6 = line.split(',').at(6).split('"').at(1);
+        query.prepare("INSERT INTO rightTable (ID, time, size, info) "
+                      "VALUES (:id, :time, :size, :info)");
+        query.bindValue(":id", temp0);
         query.bindValue(":time", temp1);
         query.bindValue(":size", temp5);
         query.bindValue(":info", temp6);
         query.exec();
     }
     tableModel2->select();
+    ui->tableView2->resizeColumnsToContents();
     file2.close();
-
-
 }

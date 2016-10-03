@@ -7,6 +7,8 @@
 #include <QSqlTableModel>
 #include <QTableView>
 #include <QSqlQuery>
+#include <QSqlError>
+#include <QRegExp>
 
 namespace Ui {
 class MainWindow;
@@ -40,7 +42,8 @@ private:
 private slots:
     void fOpen1();
     void fOpen2();
-
+    void showOnlyIDLeft();
+    void showOnlyIDRight();
 };
 
 #endif // MAINWINDOW_H
