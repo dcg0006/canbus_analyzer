@@ -9,6 +9,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QRegExp>
+#include <QSet>
 
 namespace Ui {
 class MainWindow;
@@ -37,13 +38,21 @@ private:
     QTableView *view2;
     QSqlTableModel *tableModel1;
     QSqlTableModel *tableModel2;
-    int currentView;
+    int filterOutFlag1; //to keep track of when AND is needed in filterOut
+    int filterOutFlag2;
 
 private slots:
     void fOpen1();
     void fOpen2();
     void showOnlyIDLeft();
     void showOnlyIDRight();
+    void filterOutLeft();
+    void filterOutRight();
+    void showUnique1();
+    void showUnique2();
+    void filterOutNonUnique();
+    void showMaster1();
+    void showMaster2();
 };
 
 #endif // MAINWINDOW_H
