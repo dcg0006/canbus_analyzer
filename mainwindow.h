@@ -40,6 +40,9 @@ private:
     QSqlTableModel *tableModel2;
     int filterOutFlag1; //to keep track of when AND is needed in filterOut
     int filterOutFlag2;
+    int tableCounter;
+    QString leftTableName;
+    QString rightTableName;
 
 private slots:
     void fOpen1();

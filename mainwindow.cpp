@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableView2->resizeColumnsToContents();
     ui->tableView2->show();
     filterOutFlag2 = 0;  //nothing yet filtered by default
+    tableCounter = 0;
 }
 
 MainWindow::~MainWindow(){
@@ -35,20 +36,26 @@ MainWindow::~MainWindow(){
 
 void MainWindow::createTempTable(int currentView){  //makes a temp table to show in the view
     QSqlQuery query;
+    tableCounter++;
     if (currentView == 1){
-        query.exec("CREATE TEMP TABLE leftTable(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
+        leftTableName = QString("leftTable%1").arg(tableCounter);
+        qDebug() << leftTableName;
+        query.prepare("CREATE TEMP TABLE "+ leftTableName + "(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
+        query.exec();
+        qDebug() << query.lastQuery();
         tableModel1->clear();
         tableModel1 = new QSqlTableModel();
-        tableModel1->setTable("leftTable");
+        tableModel1->setTable(leftTableName);
         ui->tableView1->setModel(tableModel1);
         ui->tableView1->show();
         filterOutFlag1 = 0;
     }
     else if (currentView == 2){
-        query.exec("CREATE TEMP TABLE rightTable(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
+        rightTableName = QString("rightTable%1").arg(tableCounter);
         tableModel2->clear();
         tableModel2 = new QSqlTableModel();
-        tableModel2->setTable("rightTable");
+        query.exec("CREATE TEMP TABLE "+rightTableName+ "(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
+        tableModel2->setTable(rightTableName);
         ui->tableView2->setModel(tableModel2);
         ui->tableView2->show();
         filterOutFlag2 = 0;
@@ -157,7 +164,7 @@ void MainWindow::filterOutNonUnique(){
         if (leftIDset.contains(temp0) && !rightIDset.contains(temp0)){  //add to model if not in file2
             if (!uniqueSet.contains(temp0)){
                 uniqueSet.insert(temp0);
-                query.prepare("INSERT INTO leftTable (ID, time, size, info) "
+                query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info) "
                           "VALUES (:id, :time, :size, :info)");
                 query.bindValue(":id", temp0);
                 query.bindValue(":time", temp1);
@@ -176,7 +183,7 @@ void MainWindow::filterOutNonUnique(){
         if (rightIDset.contains(temp0) && !leftIDset.contains(temp0)){ //add to model if not in file1
             if (!uniqueSet.contains(temp0)){
                 uniqueSet.insert(temp0);
-                query.prepare("INSERT INTO rightTable (ID, time, size, info) "
+                query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info) "
                           "VALUES (:id, :time, :size, :info)");
                 query.bindValue(":id", temp0);
                 query.bindValue(":time", temp1);
@@ -196,6 +203,9 @@ void MainWindow::filterOutNonUnique(){
     ui->tableView2->resizeColumnsToContents();
     file2.close();
     filterOutFlag2 = 0;
+    leftIDset.clear();
+    rightIDset.clear();
+    uniqueSet.clear();
 }
 
 void MainWindow::showUnique1(){
@@ -223,7 +233,7 @@ void MainWindow::showUnique1(){
 
         if (!idList.contains(temp0)){
             idList.insert(temp0);
-            query.prepare("INSERT INTO leftTable (ID, time, size, info) "
+            query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info) "
                           "VALUES (:id, :time, :size, :info)");
             query.bindValue(":id", temp0);
             query.bindValue(":time", temp1);
@@ -265,7 +275,7 @@ void MainWindow::showUnique2(){
         temp6 = line.split(',').at(6).split('"').at(1);
         if (!idList.contains(temp0)){
             idList.insert(temp0);
-            query.prepare("INSERT INTO rightTable (ID, time, size, info) "
+            query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info) "
                           "VALUES (:id, :time, :size, :info)");
             query.bindValue(":id", temp0);
             query.bindValue(":time", temp1);
@@ -352,12 +362,13 @@ void MainWindow::fOpen1(){  //opens a file to display in left window
         temp1 = line.split(',').at(1).split('"').at(1);
         temp5 = line.split(',').at(5).split('"').at(1);
         temp6 = line.split(',').at(6).split('"').at(1);
-        query.prepare("INSERT INTO leftTable (ID, time, size, info) "
+        query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info) "
                       "VALUES (:id, :time, :size, :info)");
         query.bindValue(":id", temp0);
         query.bindValue(":time", temp1);
         query.bindValue(":size", temp5);
         query.bindValue(":info", temp6);
+        //qDebug() << leftTableName;
         query.exec();
     }
     tableModel1->select();
@@ -387,7 +398,7 @@ void MainWindow::fOpen2(){  //opens a file to display in the right window
         temp1 = line.split(',').at(1).split('"').at(1);
         temp5 = line.split(',').at(5).split('"').at(1);
         temp6 = line.split(',').at(6).split('"').at(1);
-        query.prepare("INSERT INTO rightTable (ID, time, size, info) "
+        query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info) "
                       "VALUES (:id, :time, :size, :info)");
         query.bindValue(":id", temp0);
         query.bindValue(":time", temp1);
