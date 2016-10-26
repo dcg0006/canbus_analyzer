@@ -7,13 +7,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    createActions();
-    createMenus();
+    createActions();  //adds the actions and sets up signal connections
+    createMenus();    //adds menus
 
     QSqlDatabase db = db.addDatabase("QSQLITE");  //connect to database
-    db.setDatabaseName("masterPIDList.db");
-
-    if (!db.open()){
+    db.setDatabaseName("masterPIDList.db");       //set to database expected to hold known PID value table
+                                                  //should be created prior to running this program currently
+    if (!db.open()){                //display error if DB not found
         qDebug() << db.lastError();
         qDebug() <<"Error: Unable to connect";
     }
@@ -23,10 +23,10 @@ MainWindow::MainWindow(QWidget *parent) :
     tableModel2->setTable("PIDList");
     tableModel2->select();
     ui->tableView2->setModel(tableModel2);
-    ui->tableView2->resizeColumnsToContents();
+    ui->tableView2->resizeColumnsToContents(); //makes the table easier to read
     ui->tableView2->show();
     filterOutFlag2 = 0;  //nothing yet filtered by default
-    tableCounter = 0;
+    tableCounter = 0;    //used to ensure new temp tables have different names only
 }
 
 MainWindow::~MainWindow(){
@@ -37,11 +37,12 @@ MainWindow::~MainWindow(){
 void MainWindow::createTempTable(int currentView){  //makes a temp table to show in the view
     QSqlQuery query;
     tableCounter++;
-    if (currentView == 1){
+    if (currentView == 1){  // 1 = left window
         leftTableName = QString("leftTable%1").arg(tableCounter);
         qDebug() << leftTableName;
-        query.prepare("CREATE TEMP TABLE "+ leftTableName + "(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
-        query.exec();
+        query.exec("CREATE TEMP TABLE "+ leftTableName + "(ID TEXT, data TEXT, time TEXT, size TEXT, info TEXT,"
+                                                         " formula TEXT, conversion TEXT, comments TEXT,"
+                                                         " make TEXT, model TEXT, year TEXT, vin TEXT)");
         qDebug() << query.lastQuery();
         tableModel1->clear();
         tableModel1 = new QSqlTableModel();
@@ -50,11 +51,13 @@ void MainWindow::createTempTable(int currentView){  //makes a temp table to show
         ui->tableView1->show();
         filterOutFlag1 = 0;
     }
-    else if (currentView == 2){
+    else if (currentView == 2){  // 2 = right window
         rightTableName = QString("rightTable%1").arg(tableCounter);
         tableModel2->clear();
         tableModel2 = new QSqlTableModel();
-        query.exec("CREATE TEMP TABLE "+rightTableName+ "(ID TEXT, time TEXT, size TEXT, info TEXT, formula TEXT, conversion TEXT, comments TEXT)");
+        query.exec("CREATE TEMP TABLE "+rightTableName+ "(ID TEXT, data TEXT, time TEXT, size TEXT, info TEXT,"
+                                                        " formula TEXT, conversion TEXT, comments TEXT,"
+                                                        " make TEXT, model TEXT, year TEXT, vin TEXT)");
         tableModel2->setTable(rightTableName);
         ui->tableView2->setModel(tableModel2);
         ui->tableView2->show();
@@ -124,75 +127,164 @@ void MainWindow::filterOutNonUnique(){
     createTempTable(1);
     createTempTable(2);
     QSqlQuery query;
-    QString temp0;
-    QString temp1;
-    QString temp5;
-    QString temp6;
-    QByteArray line1 = file1.readLine(); //skip first line
-    QByteArray line2 = file2.readLine(); //skip first line
-    while (!file1.atEnd()){
-        line1 = file1.readLine();
-        temp0 = line1.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line1.split(',').at(1).split('"').at(1);
-        temp5 = line1.split(',').at(5).split('"').at(1);
-        temp6 = line1.split(',').at(6).split('"').at(1);
-        if (!leftIDset.contains(temp0)){  //create a set of IDs from left file
-            leftIDset.insert(temp0);
+    QString tempID;
+    QString tempInfo;
+    QString tempTime;
+    QString tempSize;
+    QString tempData;
+    QByteArray line1;
+    QByteArray line2;
+    //create sets of IDs for left and right file
+    if (ui->radioLeftWire->isChecked()){
+        line1 = file1.readLine(); //skip first line if Wireshark format
+        while (!file1.atEnd()){
+            line1 = file1.readLine();
+            tempID = line1.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            if (!leftIDset.contains(tempID)){  //create a set of IDs from left file
+                leftIDset.insert(tempID);
+            }
         }
     }
-    while (!file2.atEnd()){
-        line2 = file2.readLine();
-        temp0 = line2.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line2.split(',').at(1).split('"').at(1);
-        temp5 = line2.split(',').at(5).split('"').at(1);
-        temp6 = line2.split(',').at(6).split('"').at(1);
-        if (!rightIDset.contains(temp0)){ //create a set of IDs from right file
-            rightIDset.insert(temp0);
+    else if (ui->radioLeftCandump->isChecked()){
+        //no need to skip first line in candump format
+        while (!file1.atEnd()){
+            line1 = file1.readLine();
+            tempID = line1.split(' ').at(2).split('#').at(0);
+            if (!leftIDset.contains(tempID)){
+                leftIDset.insert(tempID);
+            }
         }
     }
+
+    if (ui->radioRightWire->isChecked()){
+        line2 = file2.readLine(); //skip first line if Wireshark format
+        while (!file2.atEnd()){
+            line2 = file2.readLine();
+            tempID = line2.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            if (!rightIDset.contains(tempID)){ //create a set of IDs from right file
+                rightIDset.insert(tempID);
+            }
+        }
+    }
+    else if (ui->radioRightCandump->isChecked()){
+        //no need to skip first line in candump format
+        while (!file2.atEnd()){
+            line2 = file2.readLine();
+            tempID = line2.split(' ').at(2).split('#').at(0);
+            if (!rightIDset.contains(tempID)){
+                rightIDset.insert(tempID);
+            }
+        }
+    }
+
     file1.seek(0); //start files back at beginning
     file2.seek(0);
-    line1 = file1.readLine(); //skip first line
-    line2 = file2.readLine(); //skip first line
     QSet<QString> uniqueSet;
-    while (!file1.atEnd()){
-        line1 = file1.readLine();
-        temp0 = line1.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line1.split(',').at(1).split('"').at(1);
-        temp5 = line1.split(',').at(5).split('"').at(1);
-        temp6 = line1.split(',').at(6).split('"').at(1);
-        if (leftIDset.contains(temp0) && !rightIDset.contains(temp0)){  //add to model if not in file2
-            if (!uniqueSet.contains(temp0)){
-                uniqueSet.insert(temp0);
-                query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info) "
-                          "VALUES (:id, :time, :size, :info)");
-                query.bindValue(":id", temp0);
-                query.bindValue(":time", temp1);
-                query.bindValue(":size", temp5);
-                query.bindValue(":info", temp6);
-                query.exec();
+    //fill in left side with unique IDs
+    if (ui->radioLeftWire->isChecked()){
+        line1 = file1.readLine(); //skip first line for wireshark format
+        while (!file1.atEnd()){
+            line1 = file1.readLine();
+            tempID = line1.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line1.split(',').at(1).split('"').at(1);
+            tempSize = line1.split(',').at(5).split('"').at(1);
+            tempInfo = line1.split(',').at(6).split('"').at(1);
+            tempData = line1.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            if (leftIDset.contains(tempID) && !rightIDset.contains(tempID)){  //add to model if not in file2
+                if (!uniqueSet.contains(tempID)){ //but only add it once
+                    uniqueSet.insert(tempID);
+                    query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info, data) "
+                              "VALUES (:id, :time, :size, :info, :data)");
+                    query.bindValue(":id", tempID);
+                    query.bindValue(":time", tempTime);
+                    query.bindValue(":size", tempSize);
+                    query.bindValue(":info", tempInfo);
+                    query.bindValue(":data", tempData);
+                    query.exec();
+                }
             }
         }
     }
-    while (!file2.atEnd()){
-        line2 = file2.readLine();
-        temp0 = line2.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line2.split(',').at(1).split('"').at(1);
-        temp5 = line2.split(',').at(5).split('"').at(1);
-        temp6 = line2.split(',').at(6).split('"').at(1);
-        if (rightIDset.contains(temp0) && !leftIDset.contains(temp0)){ //add to model if not in file1
-            if (!uniqueSet.contains(temp0)){
-                uniqueSet.insert(temp0);
-                query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info) "
-                          "VALUES (:id, :time, :size, :info)");
-                query.bindValue(":id", temp0);
-                query.bindValue(":time", temp1);
-                query.bindValue(":size", temp5);
-                query.bindValue(":info", temp6);
-                query.exec();
+    else if (ui->radioLeftCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file1.atEnd()){
+            line1 = file1.readLine();
+            tempID = line1.split(' ').at(2).split('#').at(0);
+            tempTime = line1.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line1.split(' ').at(2);
+            tempData = line1.split(' ').at(2).split('#').at(1);
+            if (leftIDset.contains(tempID) && !rightIDset.contains(tempID)){  //add to model if not in file2
+                if (!uniqueSet.contains(tempID)){ //but only add it once
+                    uniqueSet.insert(tempID);
+                    query.prepare("INSERT INTO "+leftTableName+" (ID, time, info, data) "
+                                  "VALUES (:id, :time, :info, :data)");
+                    query.bindValue(":id", tempID);
+                    query.bindValue(":time", tempTime);
+                    query.bindValue(":info", tempInfo);
+                    query.bindValue(":data", tempData);
+                    query.exec();
+                }
             }
         }
     }
+    //now for the right side
+    if (ui->radioRightWire->isChecked()){
+        line2 = file2.readLine(); //skip first line for wireshark format
+        while (!file2.atEnd()){
+            line2 = file2.readLine();
+            tempID = line2.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line2.split(',').at(1).split('"').at(1);
+            tempSize = line2.split(',').at(5).split('"').at(1);
+            tempInfo = line2.split(',').at(6).split('"').at(1);
+            tempData = line2.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            if (rightIDset.contains(tempID) && !leftIDset.contains(tempID)){  //add to model if not in file1
+                if (!uniqueSet.contains(tempID)){ //but only add it once
+                    uniqueSet.insert(tempID);
+                    query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info, data) "
+                              "VALUES (:id, :time, :size, :info, :data)");
+                    query.bindValue(":id", tempID);
+                    query.bindValue(":time", tempTime);
+                    query.bindValue(":size", tempSize);
+                    query.bindValue(":info", tempInfo);
+                    query.bindValue(":data", tempData);
+                    query.exec();
+                }
+            }
+        }
+    }
+    else if (ui->radioRightCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file2.atEnd()){
+            line2 = file2.readLine();
+            tempID = line2.split(' ').at(2).split('#').at(0);
+            tempTime = line2.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line2.split(' ').at(2);
+            tempData = line2.split(' ').at(2).split('#').at(1);
+            if (rightIDset.contains(tempID) && !leftIDset.contains(tempID)){  //add to model if not in file1
+                if (!uniqueSet.contains(tempID)){ //but only add it once
+                    uniqueSet.insert(tempID);
+                    query.prepare("INSERT INTO "+rightTableName+" (ID, time, info, data) "
+                                  "VALUES (:id, :time, :info, :data)");
+                    query.bindValue(":id", tempID);
+                    query.bindValue(":time", tempTime);
+                    query.bindValue(":info", tempInfo);
+                    query.bindValue(":data", tempData);
+                    query.exec();
+                }
+            }
+        }
+    }
+
+
+
     tableModel1->sort(0, Qt::AscendingOrder);
     tableModel1->select();
     ui->tableView1->resizeColumnsToContents();
@@ -219,29 +311,55 @@ void MainWindow::showUnique1(){
     QSet<QString> idList;
     createTempTable(1);  //create temp table to hold file data
     QSqlQuery query;
-    QString temp0;
-    QString temp1;
-    QString temp5;
-    QString temp6;
-    QByteArray line = file1.readLine(); //skip first line
-    while (!file1.atEnd()){
-        line = file1.readLine();
-        temp0 = line.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line.split(',').at(1).split('"').at(1);
-        temp5 = line.split(',').at(5).split('"').at(1);
-        temp6 = line.split(',').at(6).split('"').at(1);
-
-        if (!idList.contains(temp0)){
-            idList.insert(temp0);
-            query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info) "
-                          "VALUES (:id, :time, :size, :info)");
-            query.bindValue(":id", temp0);
-            query.bindValue(":time", temp1);
-            query.bindValue(":size", temp5);
-            query.bindValue(":info", temp6);
-            query.exec();
+    QString tempID;
+    QString tempTime;
+    QString tempSize;
+    QString tempInfo;
+    QString tempData;
+    if (ui->radioLeftWire->isChecked()){// begin parsing wireshark format .csv file
+        QByteArray line = file1.readLine(); //skip first line
+        while (!file1.atEnd()){
+            line = file1.readLine();
+            tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line.split(',').at(1).split('"').at(1);
+            tempSize = line.split(',').at(5).split('"').at(1);
+            tempInfo = line.split(',').at(6).split('"').at(1);
+            tempData = line.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            if (!idList.contains(tempID)){
+                idList.insert(tempID);
+                query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info, data) "
+                              "VALUES (:id, :time, :size, :info, :data)");
+                query.bindValue(":id", tempID);
+                query.bindValue(":time", tempTime);
+                query.bindValue(":size", tempSize);
+                query.bindValue(":info", tempInfo);
+                query.bindValue(":data", tempData);
+                query.exec();
+            }
         }
-
+    }
+    else if (ui->radioLeftCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file1.atEnd()){
+            line = file1.readLine();
+            tempID = line.split(' ').at(2).split('#').at(0);
+            tempTime = line.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line.split(' ').at(2);
+            tempData = line.split(' ').at(2).split('#').at(1);
+            if (!idList.contains(tempID)){
+                idList.insert(tempID);
+                query.prepare("INSERT INTO "+leftTableName+" (ID, time, info, data) "
+                              "VALUES (:id, :time, :info, :data)");
+                query.bindValue(":id", tempID);
+                query.bindValue(":time", tempTime);
+                query.bindValue(":info", tempInfo);
+                query.bindValue(":data", tempData);
+                query.exec();
+            }
+        }
     }
     tableModel1->sort(0, Qt::AscendingOrder);
     tableModel1->select();
@@ -262,26 +380,54 @@ void MainWindow::showUnique2(){
     QSet<QString> idList;
     createTempTable(2);  //create temp table to hold file data
     QSqlQuery query;
-    QString temp0;
-    QString temp1;
-    QString temp5;
-    QString temp6;
-    QByteArray line = file2.readLine(); //skip first line
-    while (!file2.atEnd()){
-        line = file2.readLine();
-        temp0 = line.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line.split(',').at(1).split('"').at(1);
-        temp5 = line.split(',').at(5).split('"').at(1);
-        temp6 = line.split(',').at(6).split('"').at(1);
-        if (!idList.contains(temp0)){
-            idList.insert(temp0);
-            query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info) "
-                          "VALUES (:id, :time, :size, :info)");
-            query.bindValue(":id", temp0);
-            query.bindValue(":time", temp1);
-            query.bindValue(":size", temp5);
-            query.bindValue(":info", temp6);
-            query.exec();
+    QString tempID;
+    QString tempTime;
+    QString tempSize;
+    QString tempInfo;
+    QString tempData;
+    if (ui->radioRightWire->isChecked()){// begin parsing wireshark format .csv file
+        QByteArray line = file2.readLine(); //skip first line
+        while (!file2.atEnd()){
+            line = file2.readLine();
+            tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line.split(',').at(1).split('"').at(1);
+            tempSize = line.split(',').at(5).split('"').at(1);
+            tempInfo = line.split(',').at(6).split('"').at(1);
+            tempData = line.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            if (!idList.contains(tempID)){
+                idList.insert(tempID);
+                query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info, data) "
+                              "VALUES (:id, :time, :size, :info, :data)");
+                query.bindValue(":id", tempID);
+                query.bindValue(":time", tempTime);
+                query.bindValue(":size", tempSize);
+                query.bindValue(":info", tempInfo);
+                query.bindValue(":data", tempData);
+                query.exec();
+            }
+        }
+    }
+    else if (ui->radioRightCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file2.atEnd()){
+            line = file2.readLine();
+            tempID = line.split(' ').at(2).split('#').at(0);
+            tempTime = line.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line.split(' ').at(2);
+            tempData = line.split(' ').at(2).split('#').at(1);
+            if (!idList.contains(tempID)){
+                idList.insert(tempID);
+                query.prepare("INSERT INTO "+rightTableName+" (ID, time, info, data) "
+                              "VALUES (:id, :time, :info, :data)");
+                query.bindValue(":id", tempID);
+                query.bindValue(":time", tempTime);
+                query.bindValue(":info", tempInfo);
+                query.bindValue(":data", tempData);
+                query.exec();
+            }
         }
     }
     tableModel2->sort(0, Qt::AscendingOrder);
@@ -319,7 +465,7 @@ void MainWindow::filterOutRight(){
     }
 }
 
-void MainWindow::showOnlyIDRight(){
+void MainWindow::showOnlyIDRight(){ //set filter on model to show only 1 ID
     QString tempID = ui->IDRightEdit->text();
     tempID = "'%"+tempID+"'";
     tableModel2->setFilter(QString("ID LIKE %1").arg(tempID));
@@ -327,7 +473,7 @@ void MainWindow::showOnlyIDRight(){
     filterOutFlag2 = 0;
 }
 
-void MainWindow::showOnlyIDLeft(){
+void MainWindow::showOnlyIDLeft(){  //set filter on model to show only 1 ID
     QString tempID = ui->IDLeftEdit->text();
     tempID = "'%"+tempID+"'";
     tableModel1->setFilter(QString("ID LIKE %1").arg(tempID));
@@ -351,25 +497,50 @@ void MainWindow::fOpen1(){  //opens a file to display in left window
     }
     createTempTable(1);  //create temp table to hold file data
     QSqlQuery query;
-    QString temp0;
-    QString temp1;
-    QString temp5;
-    QString temp6;
-    QByteArray line = file1.readLine(); //skip first line
-    while (!file1.atEnd()){
-        line = file1.readLine();
-        temp0 = line.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line.split(',').at(1).split('"').at(1);
-        temp5 = line.split(',').at(5).split('"').at(1);
-        temp6 = line.split(',').at(6).split('"').at(1);
-        query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info) "
-                      "VALUES (:id, :time, :size, :info)");
-        query.bindValue(":id", temp0);
-        query.bindValue(":time", temp1);
-        query.bindValue(":size", temp5);
-        query.bindValue(":info", temp6);
-        //qDebug() << leftTableName;
-        query.exec();
+    QString tempID;
+    QString tempTime;
+    QString tempSize;
+    QString tempInfo;
+    QString tempData;
+    if (ui->radioLeftWire->isChecked()){// begin parsing wireshark format .csv file
+        QByteArray line = file1.readLine(); //skip first line
+        while (!file1.atEnd()){
+            line = file1.readLine();
+            tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line.split(',').at(1).split('"').at(1);
+            tempSize = line.split(',').at(5).split('"').at(1);
+            tempInfo = line.split(',').at(6).split('"').at(1);
+            tempData = line.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            query.prepare("INSERT INTO "+leftTableName+" (ID, time, size, info, data) "
+                      "VALUES (:id, :time, :size, :info, :data)");
+            query.bindValue(":id", tempID);
+            query.bindValue(":time", tempTime);
+            query.bindValue(":size", tempSize);
+            query.bindValue(":info", tempInfo);
+            query.bindValue(":data", tempData);
+            query.exec();
+        }
+    }
+    else if (ui->radioLeftCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file1.atEnd()){
+            line = file1.readLine();
+            tempID = line.split(' ').at(2).split('#').at(0);
+            tempTime = line.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line.split(' ').at(2);
+            tempData = line.split(' ').at(2).split('#').at(1);
+            query.prepare("INSERT INTO "+leftTableName+" (ID, time, info, data) "
+                          "VALUES (:id, :time, :info, :data)");
+            query.bindValue(":id", tempID);
+            query.bindValue(":time", tempTime);
+            query.bindValue(":info", tempInfo);
+            query.bindValue(":data", tempData);
+            query.exec();
+
+        }
     }
     tableModel1->select();
     ui->tableView1->resizeColumnsToContents();
@@ -387,25 +558,52 @@ void MainWindow::fOpen2(){  //opens a file to display in the right window
     }
     createTempTable(2);  //create temp table to hold file data
     QSqlQuery query;
-    QString temp0;
-    QString temp1;
-    QString temp5;
-    QString temp6;
-    QByteArray line = file2.readLine(); //skip first line
-    while (!file2.atEnd()){
-        line = file2.readLine();
-        temp0 = line.split(',').at(6).split('"').at(1).split(' ').at(1);
-        temp1 = line.split(',').at(1).split('"').at(1);
-        temp5 = line.split(',').at(5).split('"').at(1);
-        temp6 = line.split(',').at(6).split('"').at(1);
-        query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info) "
-                      "VALUES (:id, :time, :size, :info)");
-        query.bindValue(":id", temp0);
-        query.bindValue(":time", temp1);
-        query.bindValue(":size", temp5);
-        query.bindValue(":info", temp6);
-        query.exec();
+    QString tempID;
+    QString tempTime;
+    QString tempSize;
+    QString tempInfo;
+    QString tempData;
+    if (ui->radioRightWire->isChecked()){// begin parsing wireshark format .csv file
+        QByteArray line = file2.readLine(); //skip first line
+        while (!file2.atEnd()){
+            line = file2.readLine();
+            tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line.split(',').at(1).split('"').at(1);
+            tempSize = line.split(',').at(5).split('"').at(1);
+            tempInfo = line.split(',').at(6).split('"').at(1);
+            tempData = line.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info, data) "
+                      "VALUES (:id, :time, :size, :info, :data)");
+            query.bindValue(":id", tempID);
+            query.bindValue(":time", tempTime);
+            query.bindValue(":size", tempSize);
+            query.bindValue(":info", tempInfo);
+            query.bindValue(":data", tempData);
+            query.exec();
+        }
     }
+    else if (ui->radioRightCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file2.atEnd()){
+            line = file2.readLine();
+            tempID = line.split(' ').at(2).split('#').at(0);
+            tempTime = line.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line.split(' ').at(2);
+            tempData = line.split(' ').at(2).split('#').at(1);
+            query.prepare("INSERT INTO "+rightTableName+" (ID, time, info, data) "
+                          "VALUES (:id, :time, :info, :data)");
+            query.bindValue(":id", tempID);
+            query.bindValue(":time", tempTime);
+            query.bindValue(":info", tempInfo);
+            query.bindValue(":data", tempData);
+            query.exec();
+
+        }
+    }
+    //qDebug() << query.lastQuery();
     tableModel2->select();
     ui->tableView2->resizeColumnsToContents();
     file2.close();
