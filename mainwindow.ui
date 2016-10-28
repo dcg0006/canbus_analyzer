@@ -221,49 +221,7 @@
       </item>
      </layout>
     </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_7">
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="filterNonUnique">
-        <property name="text">
-         <string>Filter Out Non-Unique</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
    </layout>
-   <zorder>radioLeftWire</zorder>
-   <zorder>radioLeftCandump</zorder>
-   <zorder>radioRightWire</zorder>
-   <zorder>radioRightCandump</zorder>
-   <zorder>filterNonUnique</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
