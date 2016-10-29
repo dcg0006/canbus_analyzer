@@ -14,6 +14,8 @@
 #include <QLabel>
 #include <QDialog>
 #include <QComboBox>
+#include "newvehiclediag.h"
+#include "dataprocwindow.h"
 
 namespace Ui {
 class MainWindow;
@@ -43,6 +45,10 @@ private:
     QAction *filterNonUnique;
     QAction *showCommonAct;
     QAction *addVehicleAct;
+    QAction *showMaster1Act;
+    QAction *showMaster2Act;
+    QAction *showUnique1Act;
+    QAction *showUnique2Act;
     // Menu objects
     QMenu *file;
     QMenu *tables;
@@ -52,7 +58,7 @@ private:
     QTableView *view2;
     QSqlTableModel *tableModel1;
     QSqlTableModel *tableModel2;
-    QDialog *addVehicleDiag;
+    newVehicleDiag *addVehicleDiag;
 
     int filterOutFlag1; //to keep track of when AND is needed in filterOut
     int filterOutFlag2;

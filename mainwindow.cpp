@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "newvehiclediag.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -87,6 +86,10 @@ void MainWindow::createActions(){ //creates actions to be attached to menus and 
     filterNonUnique = new QAction(tr("Filter Out Non-Unique IDs"), this);
     showCommonAct = new QAction(tr("Show IDs in Common"), this);
     addVehicleAct = new QAction(tr("Add New Vehicle"), this);
+    showMaster1Act = new QAction(tr("Show Master List in Left Window"), this);
+    showMaster2Act = new QAction(tr("Show Master List in Right Window"), this);
+    showUnique1Act = new QAction(tr("Show Unique IDs Left"), this);
+    showUnique2Act = new QAction(tr("Show Unique IDs Right"), this);
 
     connect(openF1, SIGNAL(triggered()), this, SLOT(fOpen1()));
     connect(ui->openButton1, SIGNAL(clicked(bool)), this, SLOT(fOpen1() ));
@@ -96,12 +99,12 @@ void MainWindow::createActions(){ //creates actions to be attached to menus and 
     connect(ui->showButton2, SIGNAL(clicked(bool)), this, SLOT(showOnlyIDRight()));
     connect(ui->filterButton1, SIGNAL(clicked(bool)), this, SLOT(filterOutLeft()));
     connect(ui->filterButton2, SIGNAL(clicked(bool)), this, SLOT(filterOutRight()));
-    connect(ui->showUnique1, SIGNAL(clicked(bool)), this, SLOT(showUnique1()));
-    connect(ui->showUnique2, SIGNAL(clicked(bool)), this, SLOT(showUnique2()));
+    connect(showUnique1Act, SIGNAL(triggered(bool)), this, SLOT(showUnique1()));
+    connect(showUnique2Act, SIGNAL(triggered(bool)), this, SLOT(showUnique2()));
     connect(filterNonUnique, SIGNAL(triggered(bool)), this, SLOT(filterOutNonUnique()));
     connect(showCommonAct, SIGNAL(triggered(bool)), this, SLOT(showCommonID()));
-    connect(ui->showMaster1, SIGNAL(clicked(bool)), this, SLOT(showMaster1()));
-    connect(ui->showMaster2, SIGNAL(clicked(bool)), this, SLOT(showMaster2()));
+    connect(showMaster1Act, SIGNAL(triggered(bool)), this, SLOT(showMaster1()));
+    connect(showMaster2Act, SIGNAL(triggered(bool)), this, SLOT(showMaster2()));
     connect(addVehicleAct, SIGNAL(triggered(bool)), this, SLOT(addNewVehicle()));
 }
 
@@ -114,8 +117,14 @@ void MainWindow::createMenus(){ //adds menu items for holding actions
     file->addAction(showCommonAct);
     file->addSection(tr("Left File"));
     file->addAction(openF1);
+    file->addAction(showUnique1Act);
     file->addSection(tr("Right File"));
     file->addAction(openF2);
+    file->addAction(showUnique2Act);
+    tables->addSection(tr("Master PID Table"));
+    tables->addAction(showMaster1Act);
+    tables->addAction(showMaster2Act);
+    tables->addSection(tr("Vehicle Table"));
     tables->addAction(addVehicleAct);
 }
 
