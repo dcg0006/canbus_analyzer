@@ -19,11 +19,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QSqlDatabase db = db.addDatabase("QSQLITE");  //connect to database
     db.setDatabaseName("masterPIDList.db");       //set to database expected to hold known PID value table
-                                                  //should be created prior to running this program currently
     if (!db.open()){                //display error if DB not found
         qDebug() << db.lastError();
         qDebug() <<"Error: Unable to connect";
     }
+    QSqlQuery checkTable;
+    checkTable.exec("CREATE TABLE IF NOT EXISTS PIDList (ID TEXT, data TEXT, time TEXT, size TEXT, "
+                    "info TEXT, formula TEXT, conversion TEXT, comments TEXT, make TEXT, model TEXT, "
+                    "year TEXT, vin TEXT)");
 
     tableModel1 = new QSqlTableModel();
     tableModel2 = new QSqlTableModel();    //show master list by default in right window
@@ -46,11 +49,11 @@ void MainWindow::createTempTable(int currentView){  //makes a temp table to show
     tableCounter++;
     if (currentView == 1){  // 1 = left window
         leftTableName = QString("leftTable%1").arg(tableCounter);
-        qDebug() << leftTableName;
+        //qDebug() << leftTableName;
         query.exec("CREATE TEMP TABLE "+ leftTableName + "(ID TEXT, data TEXT, time TEXT, size TEXT, info TEXT,"
                                                          " formula TEXT, conversion TEXT, comments TEXT,"
                                                          " make TEXT, model TEXT, year TEXT, vin TEXT)");
-        qDebug() << query.lastQuery();
+        //qDebug() << query.lastQuery();
         tableModel1->clear();
         tableModel1 = new QSqlTableModel();
         tableModel1->setTable(leftTableName);
@@ -90,6 +93,8 @@ void MainWindow::createActions(){ //creates actions to be attached to menus and 
     showMaster2Act = new QAction(tr("Show Master List in Right Window"), this);
     showUnique1Act = new QAction(tr("Show Unique IDs Left"), this);
     showUnique2Act = new QAction(tr("Show Unique IDs Right"), this);
+    startDataProc1Act = new QAction(tr("Process PID Indicated"), this);
+    //startDataProc2Act = new QAction(tr("Process Right PID Indicated"), this);
 
     connect(openF1, SIGNAL(triggered()), this, SLOT(fOpen1()));
     connect(ui->openButton1, SIGNAL(clicked(bool)), this, SLOT(fOpen1() ));
@@ -106,6 +111,8 @@ void MainWindow::createActions(){ //creates actions to be attached to menus and 
     connect(showMaster1Act, SIGNAL(triggered(bool)), this, SLOT(showMaster1()));
     connect(showMaster2Act, SIGNAL(triggered(bool)), this, SLOT(showMaster2()));
     connect(addVehicleAct, SIGNAL(triggered(bool)), this, SLOT(addNewVehicle()));
+    connect(startDataProc1Act, SIGNAL(triggered(bool)), this, SLOT(startDataProc1()));
+    //connect(startDataProc2Act, SIGNAL(triggered(bool)), this, SLOT(startDataProc2()));
 }
 
 void MainWindow::createMenus(){ //adds menu items for holding actions
@@ -126,7 +133,32 @@ void MainWindow::createMenus(){ //adds menu items for holding actions
     tables->addAction(showMaster2Act);
     tables->addSection(tr("Vehicle Table"));
     tables->addAction(addVehicleAct);
+    data->addSection(tr("Data Parsing"));
+    data->addAction(startDataProc1Act);
+    //data->addSection(tr("Right Window"));
+    //data->addAction(startDataProc2Act);
 }
+/*
+void MainWindow::dataProc(QString fileName, QString pidType){
+    dataProcess =  new dataProcWindow;
+    //dataProcess->updateText(fileName, pidType);
+    dataProcess->show();
+}*/
+
+void MainWindow::startDataProc1(){
+    //QString tempFileName = ui->leftFileName->text();
+    //QString tempPIDType = ui->IDLeftEdit->text();
+    //dataProc(tempFileName, tempPIDType);
+    dataProcess =  new dataProcWindow;
+    //dataProcess->updateText(fileName, pidType);
+    dataProcess->show();
+}
+/*
+void MainWindow::startDataProc2(){
+    QString tempFileName = ui->rightFileName->text();
+    QString tempPIDType = ui->IDRightEdit->text();
+    dataProc(tempFileName, tempPIDType);
+}*/
 
 void MainWindow::addNewVehicle(){
     addVehicleDiag = new newVehicleDiag;
