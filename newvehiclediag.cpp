@@ -16,6 +16,9 @@ newVehicleDiag::newVehicleDiag(QWidget *parent) :
     ui->lineEditMake->setInputMask(">A<aaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     ui->lineEditModel->setInputMask(">N<nnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
     ui->lineEditVIN->setInputMask(">Nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+
+    QSqlQuery checkTable;
+    checkTable.exec("CREATE TABLE IF NOT EXISTS vehicleList (Year TEXT, Make TEXT, Model TEXT, VIN TEXT)");
 }
 
 newVehicleDiag::~newVehicleDiag()

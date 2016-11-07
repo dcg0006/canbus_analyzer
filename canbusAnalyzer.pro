@@ -11,8 +11,14 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    newvehiclediag.cpp \
+    dataprocwindow.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    newvehiclediag.h \
+    dataprocwindow.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    newvehiclediag.ui \
+    dataprocwindow.ui

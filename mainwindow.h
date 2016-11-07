@@ -37,6 +37,7 @@ private:
     void createMenus();
     void createActions();
     void createTempTable(int currentView);
+    //void dataProc(QString fileName, QString pidType);
     QLabel *statusBarLabel1;
     QLabel *statusBarLabel2;
     // Action objects
@@ -49,6 +50,8 @@ private:
     QAction *showMaster2Act;
     QAction *showUnique1Act;
     QAction *showUnique2Act;
+    QAction *startDataProc1Act; //call function to process data from file indicated
+    //QAction *startDataProc2Act;
     // Menu objects
     QMenu *file;
     QMenu *tables;
@@ -59,6 +62,7 @@ private:
     QSqlTableModel *tableModel1;
     QSqlTableModel *tableModel2;
     newVehicleDiag *addVehicleDiag;
+    dataProcWindow *dataProcess;
 
     int filterOutFlag1; //to keep track of when AND is needed in filterOut
     int filterOutFlag2;
@@ -80,6 +84,8 @@ private slots:
     void showMaster1();
     void showMaster2();
     void addNewVehicle();
+    void startDataProc1();
+    //void startDataProc2();
 };
 
 #endif // MAINWINDOW_H
