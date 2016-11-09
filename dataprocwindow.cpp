@@ -23,17 +23,31 @@ dataProcWindow::~dataProcWindow(){
 
 void dataProcWindow::createActions(){
     openFileAct = new QAction(tr("Open File"), this);
+    addIDtoMasterListAct = new QAction(tr("Add ID to Master List"), this);
 
     connect(openFileAct, SIGNAL(triggered(bool)), this, SLOT(checkPID()));
     connect(ui->pushButtonOpen, SIGNAL(clicked(bool)), this, SLOT(checkPID()));
     connect(ui->pushButtonReparse, SIGNAL(clicked(bool)), this, SLOT(checkPID()));
     connect(ui->comboBoxStartByte, SIGNAL(currentTextChanged(QString)), this, SLOT(updateComboBoxes()));
     connect(ui->comboBoxEndByte, SIGNAL(currentTextChanged(QString)), this, SLOT(updateComboBoxes()));
+    connect(addIDtoMasterListAct, SIGNAL(triggered(bool)), this, SLOT(addIDtoMasterList()));
 }
 
 void dataProcWindow::createMenus(){
     fileMenu = menuBar()->addMenu(tr("File"));
     fileMenu->addAction(openFileAct);
+    tableMenu = menuBar()->addMenu(tr("Table"));
+    tableMenu->addAction(addIDtoMasterListAct);
+}
+
+void dataProcWindow::addIDtoMasterList(){
+    QString vehicle = ui->comboBoxVehicle->currentText();
+    add2Master =  new addToMasterDiag(ui->lineEditPID->text(), vehicle);
+    add2Master->exec();
+}
+
+QString dataProcWindow::getPID(){
+    return ui->lineEditPID->text();
 }
 
 void dataProcWindow::updateComboBoxes(){

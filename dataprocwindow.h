@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
+#include "addtomasterdiag.h"
 
 namespace Ui {
 class dataProcWindow;
@@ -29,14 +30,19 @@ private:
     void createActions();
     QString getFilename();
     QAction *openFileAct;
+    QAction *addIDtoMasterListAct;
     QMenu *fileMenu;
+    QMenu *tableMenu;
     QMessageBox *errorMsg;
+    addToMasterDiag *add2Master;
 
 private slots:
     void updateVehicleList();
     void showData();
     void checkPID();
     void updateComboBoxes();
+    void addIDtoMasterList();
+    QString getPID();
 
 };
 

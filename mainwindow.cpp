@@ -24,9 +24,8 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() <<"Error: Unable to connect";
     }
     QSqlQuery checkTable;
-    checkTable.exec("CREATE TABLE IF NOT EXISTS PIDList (ID TEXT, data TEXT, time TEXT, size TEXT, "
-                    "info TEXT, formula TEXT, conversion TEXT, comments TEXT, make TEXT, model TEXT, "
-                    "year TEXT, vin TEXT)");
+    checkTable.exec("CREATE TABLE IF NOT EXISTS PIDList (ID TEXT, data TEXT, conversion TEXT, comments TEXT, "
+                   " make TEXT, model TEXT, year TEXT, vin TEXT)");
 
     tableModel1 = new QSqlTableModel();
     tableModel2 = new QSqlTableModel();    //show master list by default in right window
