@@ -214,11 +214,84 @@ void MainWindow::showUnknown1(){
     ui->tableView1->resizeColumnsToContents();
     file1.close();
     filterOutFlag1 = 0;
-    statusBarLabel1->setText(tr("Showing Unique IDs from CSV File"));
+    statusBarLabel1->setText(tr("Showing Unknown IDs from CSV File"));
 }
 
 void MainWindow::showUnknown2(){
+    QString rightFile = ui->rightFileName->text();
 
+    QFile file1(rightFile);
+    if (!file1.open(QIODevice::ReadOnly)){
+        qDebug() << file1.errorString();
+        return;
+    }
+    QSet<QString> idList;
+    QSet<QString> masterIDList;
+    createTempTable(2);  //create temp table to hold file data
+    QSqlQuery query;
+    QString tempID;
+    query.exec("SELECT ID FROM PIDList");
+    while (query.next()){  //make a set of IDs from the master list
+        tempID = query.value(0).toString().toUpper();
+        masterIDList.insert(tempID);
+        tempID = tempID.toLower();  //because some csv files are uppercase, some lower
+        masterIDList.insert(tempID);
+    }
+    QString tempTime;
+    QString tempSize;
+    QString tempInfo;
+    QString tempData;
+    if (ui->radioRightWire->isChecked()){// begin parsing wireshark format .csv file
+        QByteArray line = file1.readLine(); //skip first line
+        while (!file1.atEnd()){
+            line = file1.readLine();
+            tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
+            tempID.remove(0, 7);
+            tempTime = line.split(',').at(1).split('"').at(1);
+            tempSize = line.split(',').at(5).split('"').at(1);
+            tempInfo = line.split(',').at(6).split('"').at(1);
+            tempData = line.split(',').at(6).split('"').at(1);
+            tempData.remove(0, 18).remove(QChar(' '), Qt::CaseInsensitive);
+            if (!idList.contains(tempID) && !masterIDList.contains(tempID)){  //don't show if in master list
+                idList.insert(tempID);
+                query.prepare("INSERT INTO "+rightTableName+" (ID, time, size, info, data) "
+                              "VALUES (:id, :time, :size, :info, :data)");
+                query.bindValue(":id", tempID);
+                query.bindValue(":time", tempTime);
+                query.bindValue(":size", tempSize);
+                query.bindValue(":info", tempInfo);
+                query.bindValue(":data", tempData);
+                query.exec();
+            }
+        }
+    }
+    else if (ui->radioRightCandump->isChecked()){ //begin parsing candump formatted .csv file
+        //no need to skip first line
+        QByteArray line;
+        while (!file1.atEnd()){
+            line = file1.readLine();
+            tempID = line.split(' ').at(2).split('#').at(0);
+            tempTime = line.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempInfo = line.split(' ').at(2);
+            tempData = line.split(' ').at(2).split('#').at(1);
+            if (!idList.contains(tempID) && !masterIDList.contains(tempID)){
+                idList.insert(tempID);
+                query.prepare("INSERT INTO "+rightTableName+" (ID, time, info, data) "
+                              "VALUES (:id, :time, :info, :data)");
+                query.bindValue(":id", tempID);
+                query.bindValue(":time", tempTime);
+                query.bindValue(":info", tempInfo);
+                query.bindValue(":data", tempData);
+                query.exec();
+            }
+        }
+    }
+    tableModel2->sort(0, Qt::AscendingOrder);
+    tableModel2->select();
+    ui->tableView2->resizeColumnsToContents();
+    file1.close();
+    filterOutFlag2 = 0;
+    statusBarLabel2->setText(tr("Showing Unknown IDs from CSV File"));
 }
 
 void MainWindow::startDataProc1(){
@@ -286,7 +359,8 @@ void MainWindow::showCommonID(){ //show what IDs are common to both files
             tempID = line1.split(',').at(6).split('"').at(1).split(' ').at(1);
             tempID.remove(0, 7);
             if (!leftIDset.contains(tempID)){  //create a set of IDs from left file
-                leftIDset.insert(tempID);
+                leftIDset.insert(tempID.toUpper());
+                leftIDset.insert(tempID.toLower());
             }
         }
     }
@@ -296,7 +370,8 @@ void MainWindow::showCommonID(){ //show what IDs are common to both files
             line1 = file1.readLine();
             tempID = line1.split(' ').at(2).split('#').at(0);
             if (!leftIDset.contains(tempID)){
-                leftIDset.insert(tempID);
+                leftIDset.insert(tempID.toUpper());
+                leftIDset.insert(tempID.toLower());
             }
         }
     }
@@ -308,7 +383,8 @@ void MainWindow::showCommonID(){ //show what IDs are common to both files
             tempID = line2.split(',').at(6).split('"').at(1).split(' ').at(1);
             tempID.remove(0, 7);
             if (!rightIDset.contains(tempID)){ //create a set of IDs from right file
-                rightIDset.insert(tempID);
+                rightIDset.insert(tempID.toUpper());
+                rightIDset.insert(tempID.toLower());
             }
         }
     }
@@ -318,7 +394,8 @@ void MainWindow::showCommonID(){ //show what IDs are common to both files
             line2 = file2.readLine();
             tempID = line2.split(' ').at(2).split('#').at(0);
             if (!rightIDset.contains(tempID)){
-                rightIDset.insert(tempID);
+                rightIDset.insert(tempID.toUpper());
+                rightIDset.insert(tempID.toLower());
             }
         }
     }
@@ -479,7 +556,8 @@ void MainWindow::filterOutNonUnique(){ //show what IDs are unique to each file
             tempID = line1.split(',').at(6).split('"').at(1).split(' ').at(1);
             tempID.remove(0, 7);
             if (!leftIDset.contains(tempID)){  //create a set of IDs from left file
-                leftIDset.insert(tempID);
+                leftIDset.insert(tempID.toUpper());
+                leftIDset.insert(tempID.toLower());
             }
         }
     }
@@ -489,7 +567,8 @@ void MainWindow::filterOutNonUnique(){ //show what IDs are unique to each file
             line1 = file1.readLine();
             tempID = line1.split(' ').at(2).split('#').at(0);
             if (!leftIDset.contains(tempID)){
-                leftIDset.insert(tempID);
+                leftIDset.insert(tempID.toUpper());
+                leftIDset.insert(tempID.toLower());
             }
         }
     }
@@ -501,7 +580,8 @@ void MainWindow::filterOutNonUnique(){ //show what IDs are unique to each file
             tempID = line2.split(',').at(6).split('"').at(1).split(' ').at(1);
             tempID.remove(0, 7);
             if (!rightIDset.contains(tempID)){ //create a set of IDs from right file
-                rightIDset.insert(tempID);
+                rightIDset.insert(tempID.toUpper());
+                rightIDset.insert(tempID.toLower());
             }
         }
     }
@@ -511,7 +591,8 @@ void MainWindow::filterOutNonUnique(){ //show what IDs are unique to each file
             line2 = file2.readLine();
             tempID = line2.split(' ').at(2).split('#').at(0);
             if (!rightIDset.contains(tempID)){
-                rightIDset.insert(tempID);
+                rightIDset.insert(tempID.toUpper());
+                rightIDset.insert(tempID.toLower());
             }
         }
     }
