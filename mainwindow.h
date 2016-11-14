@@ -51,7 +51,8 @@ private:
     QAction *showUnique1Act;
     QAction *showUnique2Act;
     QAction *startDataProc1Act; //call function to process data from file indicated
-    //QAction *startDataProc2Act;
+    QAction *showUnknownID1Act;
+    QAction *showUnknownID2Act;
     // Menu objects
     QMenu *file;
     QMenu *tables;
@@ -85,7 +86,8 @@ private slots:
     void showMaster2();
     void addNewVehicle();
     void startDataProc1();
-    //void startDataProc2();
+    void showUnknown1();
+    void showUnknown2();
 };
 
 #endif // MAINWINDOW_H
