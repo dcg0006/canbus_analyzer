@@ -1,10 +1,12 @@
 #include "dataprocwindow.h"
 #include "ui_dataprocwindow.h"
 
+QT_CHARTS_USE_NAMESPACE
+
 dataProcWindow::dataProcWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::dataProcWindow)
-{
+    ui(new Ui::dataProcWindow){
+
     ui->setupUi(this);
     ui->textEdit->setReadOnly(true);
     ui->comboBoxVehicle->setInsertPolicy(QComboBox::InsertAlphabetically);
@@ -15,6 +17,10 @@ dataProcWindow::dataProcWindow(QWidget *parent) :
 
     ui->lineEditPID->setInputMask("hhh"); //validates for 3 hexadecimal digits
     ui->comboBoxEndByte->setCurrentIndex(1);
+
+    scene = new QGraphicsScene(this);
+    chartSetup();
+
 }
 
 dataProcWindow::~dataProcWindow(){
@@ -38,6 +44,32 @@ void dataProcWindow::createMenus(){
     fileMenu->addAction(openFileAct);
     tableMenu = menuBar()->addMenu(tr("Table"));
     tableMenu->addAction(addIDtoMasterListAct);
+}
+
+void dataProcWindow::showEvent(QShowEvent *){
+    ui->graphicsView->fitInView(scene->sceneRect(), Qt::IgnoreAspectRatio);
+}
+
+void dataProcWindow::resizeEvent(QResizeEvent *){
+    ui->graphicsView->fitInView(scene->sceneRect(), Qt::IgnoreAspectRatio);
+}
+
+void dataProcWindow::chartSetup(){
+    series = new QSplineSeries();
+    chart = new QChart();
+    scene->addItem(chart);
+    ui->graphicsView->setScene(scene);
+
+    chart->setTheme(QChart::ChartThemeBlueCerulean);
+    QMargins margin = QMargins(1,1,1,1);
+    chart->setMargins(margin);
+    chart->legend()->hide();
+    chart->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding,
+                         QSizePolicy::DefaultType);
+    ui->graphicsView->setRenderHint(QPainter::Antialiasing);
+
+    chart->addSeries(series);
+    chart->createDefaultAxes();
 }
 
 void dataProcWindow::addIDtoMasterList(){
@@ -114,6 +146,8 @@ void dataProcWindow::showData(){  //show data from selected ID
         line = file.readLine(); //skips first line of wireshark data
         wireShark = true;
     }
+    chart->removeAllSeries();     //deletes prior series object
+    series = new QSplineSeries(); //refresh series values for chart
     do {
         if (wireShark){
             tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
@@ -138,11 +172,14 @@ void dataProcWindow::showData(){  //show data from selected ID
                     hex = (hex - 10000)/100 * .621371;
                 }
                 ui->textEdit->append(" "+tempTime+"\t\t "+tempData+"\t\t"+ QString::number(hex, 10));
+                series->append(tempTime.toDouble()*100, hex);  //shows time in milliseconds
+
             }
         }
         else {
             tempID = line.split(' ').at(2).split('#').at(0);
-            tempTime = line.split(' ').at(0).split('.').at(1).split(')').at(0);
+            tempTime = line.split(' ').at(0).split(')').at(0);
+            tempTime.remove(0, 1);
             tempData = line.split(' ').at(2).split('#').at(1);
             tempData.remove(QChar('\n'), Qt::CaseInsensitive);
             //qDebug() << tempID;
@@ -163,12 +200,17 @@ void dataProcWindow::showData(){  //show data from selected ID
                     hex = (hex - 10000)/100 * .621371;
                 }
                 ui->textEdit->append(" "+tempTime+"\t "+tempData+"\t\t"+ QString::number(hex, 10));
+                tempTime.remove(0, 7);  //just to make axis point labels smaller
+                series->append(tempTime.toDouble()*100, hex);  //shows time in milliseconds
             }
         }
         line = file.readLine();
     } while (!file.atEnd());
 
     file.close();
+
+    chart->addSeries(series);
+    chart->createDefaultAxes();
 }
 
 

@@ -8,6 +8,13 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include "addtomasterdiag.h"
+#include <QtCharts>
+#include <QGraphicsItem>
+#include <QChart>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+
+QT_CHARTS_USE_NAMESPACE
 
 namespace Ui {
 class dataProcWindow;
@@ -28,6 +35,9 @@ private:
     QString pidType;
     void createMenus();
     void createActions();
+    void chartSetup();
+    void showEvent(QShowEvent *);
+    void resizeEvent(QResizeEvent *);
     QString getFilename();
     QAction *openFileAct;
     QAction *addIDtoMasterListAct;
@@ -35,6 +45,9 @@ private:
     QMenu *tableMenu;
     QMessageBox *errorMsg;
     addToMasterDiag *add2Master;
+    QGraphicsScene *scene;
+    QChart *chart;
+    QSplineSeries *series;
 
 private slots:
     void updateVehicleList();

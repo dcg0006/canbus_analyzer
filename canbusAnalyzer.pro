@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql widgets
+QT       += core gui sql widgets charts
 
 TARGET = canbusAnalyzer
 TEMPLATE = app
@@ -13,12 +13,15 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     newvehiclediag.cpp \
-    dataprocwindow.cpp
+    dataprocwindow.cpp \
+    addtomasterdiag.cpp \
 
 HEADERS  += mainwindow.h \
     newvehiclediag.h \
-    dataprocwindow.h
+    dataprocwindow.h \
+    addtomasterdiag.h \
 
 FORMS    += mainwindow.ui \
     newvehiclediag.ui \
-    dataprocwindow.ui
+    dataprocwindow.ui \
+    addtomasterdiag.ui
