@@ -21,6 +21,8 @@ dataProcWindow::dataProcWindow(QWidget *parent) :
     scene = new QGraphicsScene(this);
     chartSetup();
 
+    //xVector = new QVector();
+    //yVector = new QVector();
 }
 
 dataProcWindow::~dataProcWindow(){
@@ -30,6 +32,7 @@ dataProcWindow::~dataProcWindow(){
 void dataProcWindow::createActions(){
     openFileAct = new QAction(tr("Open File"), this);
     addIDtoMasterListAct = new QAction(tr("Add ID to Master List"), this);
+    saveDataToFileAct = new QAction(tr("Save Data to Text File"), this);
 
     connect(openFileAct, SIGNAL(triggered(bool)), this, SLOT(checkPID()));
     connect(ui->pushButtonOpen, SIGNAL(clicked(bool)), this, SLOT(checkPID()));
@@ -37,13 +40,41 @@ void dataProcWindow::createActions(){
     connect(ui->comboBoxStartByte, SIGNAL(currentTextChanged(QString)), this, SLOT(updateComboBoxes()));
     connect(ui->comboBoxEndByte, SIGNAL(currentTextChanged(QString)), this, SLOT(updateComboBoxes()));
     connect(addIDtoMasterListAct, SIGNAL(triggered(bool)), this, SLOT(addIDtoMasterList()));
+    connect(saveDataToFileAct, SIGNAL(triggered(bool)), this, SLOT(saveDataToFile()));
 }
 
 void dataProcWindow::createMenus(){
     fileMenu = menuBar()->addMenu(tr("File"));
     fileMenu->addAction(openFileAct);
+    fileMenu->addAction(saveDataToFileAct);
     tableMenu = menuBar()->addMenu(tr("Table"));
     tableMenu->addAction(addIDtoMasterListAct);
+}
+
+void dataProcWindow::saveDataToFile(){
+    if (ui->lineEditPID->text() != "" && ui->lineEditFileSource->text() != ""){
+        QString saveFileName = "ID_"+ui->lineEditPID->text()+"_"
+            +"Bytes_"+ui->comboBoxStartByte->currentText()+"_To_"
+            +ui->comboBoxEndByte->currentText()+"_For_"+ui->comboBoxVehicle->currentText().split(" ").at(0)
+            +"_"+ui->comboBoxVehicle->currentText().split(" ").at(1)+"_"
+            +ui->comboBoxVehicle->currentText().split(" ").at(2)+".txt";
+        qDebug() << saveFileName;
+        QFile saveFile(saveFileName);
+        if (saveFile.exists()){
+            saveFile.remove(); //delete file if already present
+        }
+        if (!saveFile.open(QIODevice::ReadWrite)){
+            qDebug() << saveFile.errorString();
+            return;
+        }
+        QTextStream line(&saveFile);
+        for(int i = 0; i < xVector.size(); i++){
+            line << xVector[i] << "," << yVector[i] << "\n";
+
+        }
+        //qDebug() << line;
+        saveFile.close();
+    }
 }
 
 void dataProcWindow::showEvent(QShowEvent *){
@@ -148,6 +179,8 @@ void dataProcWindow::showData(){  //show data from selected ID
     }
     chart->removeAllSeries();     //deletes prior series object
     series = new QSplineSeries(); //refresh series values for chart
+    xVector.clear();
+    yVector.clear();
     do {
         if (wireShark){
             tempID = line.split(',').at(6).split('"').at(1).split(' ').at(1);
@@ -173,7 +206,8 @@ void dataProcWindow::showData(){  //show data from selected ID
                 }
                 ui->textEdit->append(" "+tempTime+"\t\t "+tempData+"\t\t"+ QString::number(hex, 10));
                 series->append(tempTime.toDouble()*100, hex);  //shows time in milliseconds
-
+                xVector.append(tempTime.toDouble()*100);
+                yVector.append(hex);
             }
         }
         else {
@@ -202,6 +236,8 @@ void dataProcWindow::showData(){  //show data from selected ID
                 ui->textEdit->append(" "+tempTime+"\t "+tempData+"\t\t"+ QString::number(hex, 10));
                 tempTime.remove(0, 7);  //just to make axis point labels smaller
                 series->append(tempTime.toDouble()*100, hex);  //shows time in milliseconds
+                xVector.append(tempTime.toDouble()*100);
+                yVector.append(hex);
             }
         }
         line = file.readLine();

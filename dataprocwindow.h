@@ -13,6 +13,8 @@
 #include <QChart>
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QVector>
+#include <QFile>
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -41,6 +43,7 @@ private:
     QString getFilename();
     QAction *openFileAct;
     QAction *addIDtoMasterListAct;
+    QAction *saveDataToFileAct;
     QMenu *fileMenu;
     QMenu *tableMenu;
     QMessageBox *errorMsg;
@@ -48,6 +51,8 @@ private:
     QGraphicsScene *scene;
     QChart *chart;
     QSplineSeries *series;
+    QVector<int> xVector;
+    QVector<int> yVector;
 
 private slots:
     void updateVehicleList();
@@ -56,7 +61,7 @@ private slots:
     void updateComboBoxes();
     void addIDtoMasterList();
     QString getPID();
-
+    void saveDataToFile();
 };
 
 #endif // DATAPROCWINDOW_H
