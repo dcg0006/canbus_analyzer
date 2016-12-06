@@ -15,7 +15,7 @@ dataProcWindow::dataProcWindow(QWidget *parent) :
     createActions();
     createMenus();
 
-    ui->lineEditPID->setInputMask("hhh"); //validates for 3 hexadecimal digits
+    ui->lineEditPID->setInputMask(">hhh"); //validates for 3 hexadecimal digits
     ui->comboBoxEndByte->setCurrentIndex(1);
 
     scene = new QGraphicsScene(this);
